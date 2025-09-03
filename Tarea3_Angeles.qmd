@@ -1,0 +1,500 @@
+---
+title: "Tarea3_Angeles"
+format: html
+editor: visual
+---
+
+```{r}
+#| code-fold: true
+#| message: false
+#| warning: false
+
+library(tidyverse)
+```
+
+```{r}
+#| code-fold: true 
+
+Calcular_bayes <- function(prob_condicional, prob_A, prob_B) {
+  prob_bayes <- (prob_condicional * prob_A)/prob_B
+  
+  return(prob_bayes)
+}
+```
+
+```{r}
+#| code-fold: true 
+
+Calcular_total <- function(prob_AB, prob_B, prob_c) {
+  prob_total <- (prob_AB * prob_B) + (prob_c)
+  
+  return(prob_total)
+}
+```
+
+```{r}
+#| code-fold: true
+
+Calcular_complemento <- function(prob_A) {
+  prob_Ac <- (1 - prob_A)
+  
+  return(prob_Ac)
+}
+  
+```
+
+```{r}
+#| code-fold: true
+
+Calcular_inter <- function(prob_AB, prob_B) {
+  prob_inter <- (prob_AB * prob_B)
+  return(prob_inter)
+} 
+```
+
+# PROBLEMA 1
+
+### Items in your inventory are produced at three different plants: 50% from plant A1, 30% from plant A2 and 20% from plant A3. You are aware that your plants produce at different levels of quality: A1 produces 5 percent defectives, A2 produces 7 percent defectives and A3 yields 8 percent defectives. You randomly select an item from your inventory and it turns out to be defective. Which plant is the item most likely to have come from?
+
+## Datos
+
+-   $P(A)=0.5$
+-   $P(B)=0.3$
+-   $P(C)=0.2$
+-   $P(D|A)=0.05$
+-   $P(D|B)=0.07$
+-   $P(D|C)=0.08$
+
+```{r}
+#| code-fold: true 
+prob_A <- 0.5
+prob_B <- 0.3
+prob_C <- 0.2
+prob_DA <- 0.05
+prob_DB <- 0.07
+prob_DC <- 0.08
+
+prob_D <- ((prob_DA*prob_A)+(prob_DB*prob_B)+(prob_DC*prob_C))
+prob_AD <- (prob_A*prob_DA/prob_D)
+prob_BD <- (prob_B*prob_DB/prob_D)
+prob_CD <- (prob_C*prob_DC/prob_D)
+
+cat("La planta de la cual es mas probable que provenga el defectuososo es de la A1 con una probabilidad de:", prob_AD)
+cat("\n")
+cat("Mientras que las otras, del A2 y A3 respectivamente, son de:\n") 
+prob_BD  
+prob_CD
+
+```
+
+# PROBLEMA 2
+
+### A breathalyser test is used by police in an area to determine whether a driver has an excess of alcohol in their blood. The device is not totally reliable: 8 % of drivers who have not consumed an excess of alcohol give a reading from the breathalyser as being above the legal limit, while 10 % of drivers who are above the legal limit will give a reading below that level. Suppose that in fact 18 % of drivers are above the legal alcohol limit, and the police stop a driver at random. Give answers to the following to four decimal places.
+
+## Datos
+
+-   $P(testAbove|Bellow)=0.08$
+-   $P(testBellow|Above)=0.1$
+-   $P(Above)=0.18$
+
+### Part a)What is the probability that the driver is incorrectly classified as being over the limit?
+
+### Part b)What is the probability that the driver is correctly classified as being over the limit?
+
+### Part c)Find the probability that the driver gives a breathalyser test reading that is over the limit.
+
+### Part d)Find the probability that the driver is under the legal limit, given the breathalyser reading is also below the limit.
+
+```{r}
+#| code-fold: true 
+prob_tAB <- 0.08
+prob_tBA <- 0.1
+prob_A <- 0.18
+
+prob_B <- 1- prob_A
+
+prob_tAandB <- (prob_tAB*prob_B)
+cat("Para el inciso a, la probabilidad es de:", prob_tAandB)
+cat("\n")
+
+prob_tAA <- (1-prob_tBA)
+prob_tAandA <- (prob_tBA*prob_A)
+cat("Para el inciso b, la probabilidad es de:", prob_tAandA)
+cat("\n")
+
+prob_tA <- (prob_tAandA)+(prob_tAandB)
+cat("Para el inciso c, la probabilidad es de:", prob_tA)
+cat("\n")
+
+prob_tBB <- (1-prob_tAB)
+prob_tBandB <- (prob_tBB*prob_B)
+Prob_BtB <- (prob_tBandB/((prob_tBandB)+(prob_tAandA)))
+cat("Para el inciso d, la probabilidad es de:", Prob_BtB)
+
+```
+
+# PROBLEMA 3
+
+### Factories A and B produce computers. Factory A produces 2 times as many computers as factory B. The probability that an item produced by factory A is defective is 0.025 and the probability that an item produced by factory B is defective is 0.026.
+
+###A computer is selected at random and it is found to be defective. What is the probability it came from factory A?
+
+## Datos
+
+-   $P(A)= 2P(B)$
+-   $P(D|A)=0.025$
+-   $P(D|B)=0.026$
+
+```{r}
+#| code-fold: true 
+prob_DA <- 0.025
+prob_DB <- 0.026
+prob_A <- 0.2
+prob_B <- 0.1
+
+prob_DAandA <- (prob_DA*prob_A)
+prob_DBandB <- (prob_DB*prob_B)
+prob_AD <- (prob_DAandA /(prob_DAandA + prob_DBandB))
+
+cat("La probabilidad de que provenga de la empresa A, dado que esta defectuosa  es de:", prob_AD)
+
+```
+
+# PROBLEMA 4
+
+### It is estimated that approximately 8.1% Americans are afflicted with diabetes. Suppose that a certain diagnostic evaluation for diabetes will correctly diagnose 97.5% of all adults over 40 with diabetes as having the disease and incorrectly diagnoses 1.5% of all adults over 40 without diabetes as having the disease.
+
+## Datos
+
+-   $P(D)=0.081$
+-   $P(P|D)=0.975$
+-   $P(P|H)=0.015$
+
+### a) Find the probability that a randomly selected adult over 40 does not have diabetes, and is diagnosed as having diabetes (such diagnoses are called "false positives").
+
+### b) Find the probability that a randomly selected adult of 40 is diagnosed as not having diabetes.
+
+### c) Find the probability that a randomly selected adult over 40 actually has diabetes, given that he/she is diagnosed as not having diabetes (such diagnoses are called "false negatives").
+
+```{r}
+#| code-fold: true 
+prob_D <- 0.081
+prob_PD <- 0.975
+prob_PH <- 0.015
+
+prob_H <- 1-prob_D
+prob_PandH <- prob_H * prob_PH
+cat("Para el inciso a, la probabilidad es de:", prob_PandH)
+cat("\n")
+
+prob_PandD <- prob_PD * prob_D
+prob_P<- prob_PandD + prob_PandH
+prob_Pc <- 1-prob_P
+cat("Para el inciso b, la probabilidad es de:", prob_Pc)
+cat("\n")
+
+prob_PcD <- 1-prob_PD
+prob_PcH <- 1-prob_PH
+prob_DandPc <- (prob_PcD * prob_D)
+prob_HandPc <- (prob_H * prob_PcH)
+prob_DPc <- prob_DandPc/ (prob_DandPc + prob_HandPc)
+
+cat("Para el inciso C, la probabilidad es de:", prob_DPc)
+
+
+
+```
+
+# PROBLEMA 5
+
+### In a random sample of 1,000 people, it is found that 7.1% have a liver ailment. Of those who have a liver ailment, 8% are heavy drinkers, 70% are moderate drinkers, and 22% are nondrinkers. Of those who do not have a liver ailment, 13% are heavy drinkers, 41% are moderate drinkers, and 46% are nondrinkers.
+
+### If a person is chosen at random, and he or she is a heavy drinker, what is the empirical probability of that person having a liver ailment?
+
+## Datos
+
+-   $Sample=1000$
+-   $P(Liverailment)=0.071$
+-   $P(Heavy and Liverailment)=0.08$
+-   $P(Moderate and Liverailment)=0.7$
+-   $P(Non and Liverailment)=0.22$
+-   $P(Heavy and Liverailmentc)=0.13$
+-   $P(Moderate and Liverailmentc)=0.41$
+-   $P(Non and Liverailmentc)=0.46$
+
+```{r}
+#| code-fold: true 
+prob_Liver <- 0.071
+prob_HandL <- 0.08
+prob_HandLc <- 0.13
+PersonasLiver <- 1000*prob_Liver
+PersonasLiverC <- 1000-PersonasLiver
+
+prob_LH <- (prob_HandL*PersonasLiver)/ ((prob_HandL*PersonasLiver)+(prob_HandLc*PersonasLiverC))
+cat("La probabilidad es de:", prob_LH)
+
+
+```
+
+# PROBLEMA 6
+
+### A biomedical research company produces 48% of its insulin at a plant in Kansas City, and the remainder is produced at a plant in Jefferson City. Quality control has shown that 0.6% of the insulin produced at the plant in Kansas City is defective, while 0.55% of the insulin produced at the plant in Jefferson City is defective. What is the probability that a randomly chosen unit of insulin came from the plant in Jefferson City given that it is defective?
+
+## Datos
+
+-   $P(K)=0.48$
+-   $P(J)=0.48$
+-   $P(D|K)=0.06$
+-   $P(D|J)=0.055$
+
+```{r}
+#| code-fold: true 
+prob_DJ <- 0.055
+prob_DK <- 0.06
+prob_J <- 0.52
+prob_K <- 0.48
+  
+prob_JD <- (prob_DJ*prob_J)/((prob_DJ*prob_J)+(prob_DK*prob_K))
+cat("La probabilidad es de:", prob_JD)
+
+```
+
+# PROBLEMA 7
+
+### Three airlines serve a small town in Ohio. Airline A has 47% of all scheduled flights, airline B has 28% and airline C has the remaining 25%. Their on-time rates are 75%, 62%, and 36%, respectively. A flight just left on-time. What is the probability that it was a flight of airline A?
+
+## Datos
+
+-   $P(A)=0.47$
+-   $P(B)=0.28$
+-   $P(C)=0.25$
+-   $P(T|A)=0.75$
+-   $P(T|B)=0.62$
+-   $P(T|C)=0.36$
+
+```{r}
+#| code-fold: true 
+prob_A <- 0.47
+prob_B <- 0.28
+prob_C <- 0.25
+prob_TA <- 0.75
+prob_TB <- 0.62
+prob_TC <- 0.36
+
+prob_AT <- (prob_TA*prob_A)/ ((prob_TA*prob_A)+(prob_TB*prob_B)+(prob_TC*prob_C))
+cat("La probabilidad es de:", prob_AT)
+
+```
+
+# PROBLEMA 8
+
+### Bad gums may mean a bad heart. Researchers discovered that 76% of people who have suffered a heart attack had periodontal disease, an inflammation of the gums. Only 27% of healthy people have this disease. Suppose that in a certain community heart attacks are quite rare, occurring with only 15% probability.
+
+## Datos
+
+-   $P(H and P)=0.76$
+-   $P(Hc and P)=0.27$
+-   $P(H)=0.15$
+-   $P(H)=0.36$
+
+###A. If someone has periodontal disease, what is the probability that he or she will have a heart attack? ###B. If 36% of the people in a community will have a heart attack, what is the probability that a person with periodontal disease will have a heart attack?
+
+```{r}
+#| code-fold: true 
+prob_H <- 0.15
+prob_H1 <- 0.36
+prob_HcandP <- 0.27
+prob_HandP <- 0.76
+
+personasH<- prob_H*1000
+personasHc<- 1000-personasH
+personasHcP <- personasHc * prob_HcandP
+personasHP <- personasH * prob_HandP
+
+prob_HP <- (personasHP/(personasHP+personasHcP))
+cat("La probabilidad del inciso A es de:", prob_HP)
+cat("\n")
+
+personasH1<- prob_H1*1000
+personasHc1<- 1000-personasH1
+personasH1cP <- personasHc1 * prob_HcandP
+personasH1P <- personasH1 * prob_HandP
+
+prob_H1P <- (personasH1P/(personasH1P+personasH1cP))
+cat("La probabilidad del inciso B es de:", prob_H1P)
+
+```
+
+# PROBLEMA 9
+
+### Transplant operations have become routine. One common transplant operation is for kidneys. The most dangerous aspect of the procedure is the possibility that the body may reject the new organ. There are several new drugs available for such circumstances and the earlier the drug is administered, the higher the probability of averting rejection. The New England Journal of Medicine recently reported the development of a new urine test to detect early warning signs that the body is rejecting a transplanted kidney. However, like most other tests, the new test is not perfect. In fact, 20% of negative tests and 6% of positive tests prove to be incorrect. Physicians know that in about 32% of kidney transplants the body tries to reject the organ. If the new test has a positive result (indicating early warning of rejection), what is the probability that the body is attempting to reject the kidney?
+
+## Datos
+
+-   $P(N|R)=0.20$
+-   $P(P|Rc)=0.06$
+-   $P(R)=0.32$
+
+```{r}
+#| code-fold: true 
+prob_NR <- 0.20
+prob_PRc <- 0.06
+prob_R <- 0.32
+prob_Rc <- 1-prob_R
+
+personasR <- 1000*prob_R
+personas_NR <- personasR * prob_NR
+personas_PR <- personasR - personas_NR
+personasRc <- 1000 * prob_Rc
+personas_PRc <- personasRc * prob_PRc
+
+prob_RP <- (personas_PR)/ (personas_PR + personas_PRc)
+cat("La probabilidad es de:", prob_RP)
+
+
+```
+
+# PROBLEMA 10
+
+### Ignoring multiple births, assume babies born at a hospital are independent with the probability that a baby is a boy and the probability a baby is a girl both equal 1/2. The probability the next three babies born are of the same sex is
+
+## Datos
+
+-   $P(boy)=1/2$
+-   $P(girl)=1/2$
+
+### Para empezar, sabemos que o es una girl o es un boy. por lo que solamente esos dos casos para cada una de las repeticiones.
+
+```{r}
+#| code-fold: true 
+prob_boy_3 <- (1/2)*(1/2)*(1/2)
+prob_girl_3 <- (1/2)*(1/2)*(1/2)
+
+prob_baby_3 <- prob_boy_3 + prob_girl_3
+cat("La probabilidad es de:", prob_baby_3)
+```
+
+# PROBLEMA 11
+
+### All that is left in a packet of candy are 5 reds, 3 greens, and 3 blues.
+
+## Datos
+
+-   $P(r)=5/11$
+-   $P(g)=3/11$
+-   $P(b)=3/11$
+
+###(a)What is the probability that a random drawing yields a blue followed by a blue assuming that the first candy drawn is put back into the packet? ###(b)Are the events 'blue' and 'blue' independent?
+
+```{r}
+#| code-fold: true 
+prob_red <- 5/11
+prob_green <- 3/11
+prob_blue <- 3/11
+
+prob_a <-  (prob_blue*prob_blue)
+cat("La probabilidad del inciso a) es de:", prob_a)
+cat("\n")
+
+cat("b) Los eventos del inciso a), en ese caso si son independintes dado que se regresa el dulce azul.")
+```
+
+# PROBLEMA 12
+
+### If P(E∩F)=0.042, P(E\|F)=0.28, and P(F\|E)=0.7
+
+### a) P(E)
+
+### b) P(F)
+
+### c) P(EUF)
+
+### d) Are events E and F independent?
+
+```{r}
+#| code-fold: true 
+prob_EandF <- 0.042
+prob_EF <- 0.28
+prob_FE <- 0.7
+
+prob_E <- prob_EandF / prob_FE
+cat("La probabilidad del inciso a) es de:", prob_E)
+cat("\n")
+
+prob_F <- prob_EandF / prob_EF
+cat("La probabilidad del inciso b) es de:", prob_F)
+cat("\n")
+
+prob_EorF <- prob_E + prob_F - prob_EandF
+cat("La probabilidad del inciso a) es de:", prob_EorF)
+cat("\n")
+
+cat("No son independientes, ya que como podemos ver en el desarrollo del problema: la interseccion de las probabilidades no es el producto de ellas")
+```
+
+# PROBLEMA 13
+
+### If P(A) = 0.20, P(B) = 0.30 and P(A and B) = 0.06, then A and B are: independent events, because the P(A and B) is the product of P(A) and P(B).
+
+### Two events A and B are said to be independent if:
+
+### P(A and B)=P(A)⋅P(B)
+
+# PROBLEMA 14
+
+### For two events A and B, P(A)=0.3 and P(B)=0.2.
+
+###(a) If A and B are independent, then ###(b) If A and B are dependent and P(A\|B)=0.1, then
+
+```{r}
+#| code-fold: true 
+proB_A <- 0.3
+proB_B <- 0.2
+
+proB_AandB<- proB_B*proB_A
+proB_AorB<- proB_B+proB_A-proB_AandB
+proB_AB<- proB_AandB/proB_B
+cat("Las probabilidades del inciso a) son:\n", proB_AorB)
+cat("\n", proB_AandB)
+cat("\n", proB_AB)
+
+proB_AB1 <- 0.1
+proB_BandA <- (proB_AB1*proB_B)
+proB_BA<- proB_BandA/(proB_A)
+cat("Las probabilidades del inciso b) son:\n", proB_BA)
+cat("\n", proB_BandA)
+
+```
+
+# PROBLEMA 15
+
+### Two fair dice, one blue and one red, are tossed, and the up face on each die is recorded. Define the following events:
+
+### E:{A 1 on the blue die }
+
+### F:{ The sum of the numbers is even }
+
+### Find the following probabilities:
+
+## Datos
+
+-   $P(E)=1/6$ \### Para el inciso c), debemos de considerar que los eventos para los cuales se cumple la condicion del evento F y del evento E son solamente 3 de 36, que seria cuando el dado azul es 1 y el dado rojo puede tomar los valores de 1, 3 y 5. \### Para el inciso b), debemos de considerar que los eventos E y F son independientes, por lo que podemos encontrar P(F) al dividir la interseccion entre P(E). Quedando asi: 1/2.
+
+# PROBLEMA 16
+
+### If P(A)=0.3, P(B)=0.5, and P(A∪B)=0.72, then
+
+```{r}
+#| code-fold: true 
+Prob_A<- 0.3
+Prob_B<- 0.5
+Prob_AorB<- 0.72
+
+Prob_AandB <- Prob_A + Prob_B - Prob_AorB
+cat("La probabilidad de la interseccion entre A y B es de:",Prob_AandB)
+cat("\n")
+cat("Los eventos A y B no son independientes, ya que su interseccion no es el producto de sus probabilidades")
+cat("\n")
+cat("Los eventos A y B no son mutuamente excluyentes, ya que su union no es 1. Y tenemos un valor (0.08) en la interseccion de ambos")
+
+```
