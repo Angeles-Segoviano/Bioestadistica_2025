@@ -1,0 +1,610 @@
+---
+title: "Distribución Hipergeométrica"
+lang: es
+editor: 
+  markdown: 
+    wrap: 72
+---
+
+```{=html}
+<style>
+main.content {
+text-align: justify}
+</style>
+```
+
+```{r}
+#| label: setup
+#| code-fold: true
+#| include: false
+
+library(tidyverse)
+library(kableExtra)
+library(ggplot2)
+```
+
+La **Distribución Hipergeométrica** surge en el contexto de la toma al
+azar de una muestra de tamaño $n$, de tal forma que la selección es sin
+reemplazo y el orden de los objetos seleccionados no es relevante, de un
+conjunto de datos de dos tipos. Del tipo $K$ para uno y del $N-K$ para
+el otro.
+
+::: {#def-hipergeometrica}
+Si para cada subconjunto seleccionado se define la variable aleatoria
+$X$ como el número de objetos seleccionados del primer tipo, entonces es
+claro que $X$ unicamente tomará el valor de 1 cuando todos los objetos
+escogidos sean del tipo 1. Y 0 cuando todos estos sean del tipo 2.
+
+La probabilidad de que $X$ tome un valor $x$ está dada por la siguiente
+expresión: \begin{equation}
+f(x) = \begin{cases} 
+\frac{\binom{K}{X}\binom{N-K}{n-x}}{\binom{N}{n}} & \text{si } x = 0, 1, \ldots, n, \\
+0 & \text{en otro caso.}
+\end{cases}
+\end{equation} Y ser denota como: $X \sim \text{hipergeo}(N, K,n).$
+:::
+
+## Características
+
+**Parámetros**
+
+La distribución hipergeométrica tiene 3 parámetros:
+
+-   $N$: Es el número total de eventos posibles (Tamaño de la
+    población).
+-   $K$: El número de éxitos posibles.
+-   $n$: Es el tamaño de la muestra que se extrae del total, donde
+    ($n \leq \text{mín }\{N, K-N\}$).
+
+**Parámetros estadísticos**
+
+-   Media (Esperanza): $$E(X) = n\frac{K}{N} $$
+...........................................................................................................................................
+-   Varianza: $$Var(X) = n \frac{K}{N}\frac{N-K}{N}\frac{N-n}{N-1}$$ o
+    si usamos $p=\frac{K}{N}$: $$Var(X) = np(1-p)\frac{N-n}{N-1}$$
+...........................................................................................................................................
+-   Desviación Estándar: $$\sigma = \sqrt{n \frac{K}{N}\frac{N-K}{N}\frac{N-n}{N-1}}$$ o 
+    si usamos $p= \frac{K}{N}$: $$\sigma = \sqrt{np(1-p)\frac{N-n}{N-1}}$$
+...........................................................................................................................................
+-   Función de distribución: $$F(x) = P(X\leq x) = \sum_ {k=0}^{x} \frac{\binom{N}{k}\binom{N-K}{n-k}}{\binom{N}{n}} $$
+    Pero en la práctica en R se cálcula con $phyper(x,K,N-K,n)$.
+
+## Ejemplo Básico
+
+En mi biblioteca tengo 30 libros: 8 son de matemáticas y la mitad de
+ellos ya los leí; 7 son de física, pero de estos solo he leído 3; 5 son
+de biología y ya me he leído todos; los restantes son de español y no he
+leído ninguno. ¿Cuál es la proababilidad de escoger 8 libros al azar y
+que 5 sean de los que no he leído?
+
+**Parámetros**
+
+-   $N=30$
+-   $K=4+(7-3)+(30-(8+7+5)) = 4+4+(30-20) = 18$
+-   $n=8$
+
+**Cálculo**
+
+```{r}
+# Parámetros:
+N <- 30
+K <- 18
+n <- 8
+x <- 5
+# Cálculo de probabilidad:
+prob <- (((factorial(K)/(factorial(x)*factorial(K-x)))*(factorial(N-K)/(factorial(n-x)*factorial((N-K)-(n-x)))))/(factorial(N)/(factorial(n)*factorial(N-n))))
+cat("P(X=5) =", round(prob, 4))
+
+```
+
+```{r}
+# Verificación usando R
+N <- 30
+K <- 18
+n <- 8
+
+prob_r <- dhyper(5, K, N-K,n)
+
+cat("\nVerificación con R:", round(prob_r, 4))
+
+```
+
+```{r}
+# Crear data frame
+  # Datos fijos
+N <- 30
+K <- 18
+n <- 8
+  # Valores de x
+x <- max(0, n-(N-K)): min(n, K)
+  # Probabilidades
+probabilidades <- dhyper(x, K, N-K, n)
+# Tabla
+Ejemplo_data <- data.frame(
+  x = x,
+  Probabilidad = round(probabilidades, 4),
+  P_Acumulada = round(cumsum(probabilidades), 4)
+)
+cat("\n La suma de probabilidades:", sum(probabilidades))
+
+# Mostrar tabla
+kable(Ejemplo_data,
+      caption = "Distribución de probabilidades para el ejemplo",
+      align = "cc") %>%
+  kable_styling(bootstrap_options = "striped")
+
+# Gráfica para la Función de Probabilidad
+ggplot(Ejemplo_data, aes(x = x, y = Probabilidad)) +
+  geom_col(fill = "steelblue", alpha = 0.8, width = 0.7) +
+  geom_text(aes(label = round(Probabilidad, 4)), 
+            vjust = -0.5, size = 3) +
+  labs(title = "Función de Probabilidad",
+       subtitle = paste("N =", N, ", K =", K, ", n =", n),
+       x = "x (Número de éxitos en la muestra)",
+       y = "P(X = x)") +
+  theme_minimal() +
+  theme(plot.title = element_text(face = "bold", hjust = 0.5),
+        plot.subtitle = element_text(hjust = 0.5))
+
+# Gráfica para la Probabilidad Acumulada
+ggplot(Ejemplo_data, aes(x = x, y = P_Acumulada)) +
+  geom_step(color = "darkred", linewidth = 1.2) +
+  geom_point(color = "darkred", size =  3) +
+  labs(title = "Función de Distribución Acumulada (CDF)",
+       subtitle = paste("N =", N, ", K =", K, ", n =", n),
+       x = "x (Números de éxitos en la muestra)",
+       y = "P(X ≤ x)") +
+  ylim(0, 1) +
+  theme_minimal() +
+  theme(plot.title = element_text(face = "bold", hjust = 0.5),
+        plot.subtitle = element_text(hjust = 0.5))
+
+
+```
+
+**Interpretación**
+
+La probabilidad de obtener 5 libros no leídos de una muestra de 8 es de
+0.3221.
+
+**Parámetros estadísticos del ejemplo**
+
+```{r}
+#Función para calcular los parámetros estadísticos
+estadisticos_hypergeo <- function(N, K, n) {
+  p <- K/N
+  media <- n*(p)
+  varianza <- n*(p)*(1-p)*((N-n)/(N-1))
+  SD <- sqrt(varianza)
+  
+  return(list(
+    media = media,
+    varianza = varianza,
+    SD = SD
+  ))
+}
+```
+
+-   Media (Esperanza):
+
+```{r}
+N <- 30
+K <- 18
+n <- 8
+
+media <- n*(K/N)
+cat("La media es de:", round(media, 4))
+```
+
+-   Varianza:
+
+```{r}
+N <- 30
+K <- 18
+n <- 8
+p <- K/N
+
+varianza <- n*p*(1-p)*((N-n)/(N-1))
+cat("La varianza es de:", round(varianza,4))
+
+```
+
+-   Desviación estándar:
+
+```{r}
+N <- 30
+K <- 18
+n <- 8
+
+SD <- sqrt(n*p*(1-p)*((N-n)/(N-1)))
+
+cat("La desviación estándar es de:", round(SD,4))
+```
+
+
+## Comparación: Efecto de los Parámetros
+
+### Efecto del parámetro $N$ (Número total de eventos posibles) con $p$ y $n$ fijos
+
+```{r}
+# Gráfica Efecto parámetro N, con K/N constante
+p <- 0.4
+n_fijo <- 10
+N_values <- c(30, 50, 100, 200)
+
+N_data <- data.frame()
+
+for(N_val in N_values) {
+  K_val <- round(N_val * p)
+  x_temp <- max(0, n_fijo-(N_val-K_val)):min(n_fijo, K_val)
+  prob_temp <- dhyper(x_temp, K_val, N_val-K_val, n_fijo)
+  N_data <- rbind(N_data,
+                           data.frame(x = x_temp, 
+                                     prob = prob_temp,
+                                     N_label = as.factor(paste0("N=", N_val, ", K=", K_val))))
+}
+
+ggplot(N_data, aes(x = x, y = prob, color = N_label)) +
+  geom_line(linewidth = 1.2) +
+  geom_point(size = 2.5) +
+  labs(title = "Efecto del tamaño de la población (N)",
+       subtitle = paste("Proporción K/N = 0.4, n =", n_fijo),
+       x = "x (Número de éxitos en la muestra)",
+       y = "P(X = x)",
+       color = "N") +
+  scale_color_viridis_d(option = "plasma") +
+  theme_minimal() +
+  theme(plot.title = element_text(face = "bold", hjust = 0.5),
+        plot.subtitle = element_text(hjust = 0.5),
+        legend.position = "right")
+```
+
+### Efecto del parámetro $K$ con $N$ y $n$ fijos
+
+```{r}
+# Efecto de K - Número de éxitos en la población, manteniendo N y n fijos
+
+N <- 50    
+n <- 10    
+K_values <- c(10, 20, 30, 40)  # Diferentes valores de K
+
+datos_efecto_K <- data.frame()
+
+# Calcular el rango completo de x
+x_min <- Inf
+x_max <- -Inf
+
+for(K_val in K_values) {
+  x_temp <- max(0, n-(N-K_val)):min(n, K_val)
+  x_min <- min(x_min, min(x_temp))
+  x_max <- max(x_max, max(x_temp))
+  
+  prob_temp <- dhyper(x_temp, K_val, N-K_val, n)
+  proporcion_redondeada <- round(K_val/N, 2)
+  
+  datos_efecto_K <- rbind(datos_efecto_K,
+                          data.frame(x = x_temp, 
+                                    prob = prob_temp,
+                                    K_label = as.factor(paste0("K=", K_val, " (p=", proporcion_redondeada, ")"))))
+}
+
+# Gráfico del efecto de K
+ggplot(datos_efecto_K, aes(x = x, y = prob, color = K_label, group = K_label)) +
+  geom_line(linewidth = 1.2) +
+  geom_point(size = 2) +
+  scale_x_continuous(breaks = x_min:x_max, limits = c(x_min, x_max)) +
+  labs(title = "Efecto del número de éxitos en la población (K)",
+       subtitle = paste("N =", N, ", n =", n),
+       x = "x (Número de éxitos en la muestra)",
+       y = "P(X = x)",
+       color = "K (proporción p=K/N)") +
+  scale_color_brewer(palette = "Set1") +
+  theme_minimal() +
+  theme(plot.title = element_text(face = "bold", hjust = 0.5),
+        plot.subtitle = element_text(hjust = 0.5),
+        legend.position = "right",
+        panel.grid.minor = element_blank())
+```
+
+### Efecto del parámetro $n$ (Tamaño de la muestra) con $N$ y $K$ fijos
+
+```{r}
+# Efecto del parámetro n
+n_values <- c(5, 10, 15, 20)
+datos_n <- data.frame()
+
+for(n_val in n_values) {
+  x_temp <- max(0, n_val-(N-K)):min(n_val, K)
+  prob_temp <- dhyper(x_temp, K, N-K, n_val)
+  datos_n <- rbind(datos_n,
+                   data.frame(x = x_temp, 
+                              prob = prob_temp,
+                              n = as.factor(n_val)))
+}
+
+ggplot(datos_n, aes(x = x, y = prob, fill = n)) +
+  geom_col(position = "dodge", alpha = 0.8) +
+  labs(title = "Efecto del tamaño de muestra (n)",
+       subtitle = paste("N =", N, ", K =", K),
+       x = "x (Número de éxitos en la muestra)",
+       y = "P(X = x)",
+       fill = "n") +
+  scale_fill_brewer(palette = "Set2") +
+  theme_minimal() +
+  theme(plot.title = element_text(face = "bold", hjust = 0.5),
+        plot.subtitle = element_text(hjust = 0.5),
+        legend.position = "right")
+
+```
+
+## Propiedades importantes
+### Relación con la Distribución Bernoulli
+
+**Demostración: Hipergeométrica se reduce a Bernoulli con $p=K/N$ y $n=1$**
+```{r}
+# Demostración relación con la Bernoulli
+N <- 50    
+K <- 20    
+n <- 1     
+p <- K/N  
+
+x <- 0:1
+
+# Distribución Hipergeométrica con n=1
+prob_hiper <- dhyper(x, K, N-K, n)
+
+# Distribución Bernoulli con p=K/N
+prob_bernoulli <- dbinom(x, size=1, prob=p)
+
+# data frame para la comparación
+datos <- data.frame(
+  x = rep(x, 2),
+  probabilidad = c(prob_hiper, prob_bernoulli),
+  distribucion = rep(c("Hipergeométrica (N,K,n=1)", "Bernoulli (p=K/N)"), each=length(x))
+)
+
+# Gráfico de la comparación
+ggplot(datos, aes(x = as.factor(x), y = probabilidad, fill = distribucion)) +
+  geom_col(position = "dodge", alpha = 0.8, width = 0.7) +
+  geom_text(aes(label = round(probabilidad, 4)), 
+            position = position_dodge(width = 0.7), 
+            vjust = -0.5, size = 4) +
+  labs(title = "Hipergeométrica (N,K,n=1) = Bernoulli (p=K/N)",
+       subtitle = paste("N =", N, ", K =", K, ", n = 1, p =", round(p, 4)),
+       x = "x (Número de éxitos)",
+       y = "Probabilidad",
+       fill = "Distribución") +
+  scale_fill_manual(values = c("Hipergeométrica (N,K,n=1)" = "steelblue", 
+                                "Bernoulli (p=K/N)" = "coral")) +
+  ylim(0, max(prob_hiper) * 1.15) +
+  theme_minimal() +
+  theme(plot.title = element_text(face = "bold", hjust = 0.5, size = 14),
+        plot.subtitle = element_text(hjust = 0.5),
+        legend.position = "bottom")
+
+# Tabla de comparación
+
+tabla_comparacion <- data.frame(
+  x = x,
+  "Hipergeométrica (N,K,n=1)" = prob_hiper,
+  "Bernoulli (p=K/N)" = prob_bernoulli,
+  "Diferencia" = abs(prob_hiper - prob_bernoulli),
+  check.names = FALSE
+)
+
+# Mostrar tabla
+kable(tabla_comparacion,
+      caption = "Comparación de Hipergeométrica vs Bernoulli",
+      align = "cc") %>%
+  kable_styling(bootstrap_options = "striped")
+```
+
+
+### Relación con la Distribución Binomial
+Cuando N (El tamaño de la población) es grande, la hipergeométrica se aproxima a la binomial.
+
+**Demostración**
+```{r}
+# Comparación Hipergeométrica vs Binomial
+
+N_grande <- 200
+K_grande <- 80
+n_comparacion <- 10
+p_binomial <- K_grande / N_grande
+
+x_hiper <- max(0, n_comparacion-(N_grande-K_grande)):min(n_comparacion, K_grande)
+prob_hiper <- dhyper(x_hiper, K_grande, N_grande-K_grande, n_comparacion)
+prob_binom <- dbinom(x_hiper, n_comparacion, p_binomial)
+
+datos_comparacion_dist <- data.frame(
+  x = rep(x_hiper, 2),
+  prob = c(prob_hiper, prob_binom),
+  distribucion = rep(c("Hipergeométrica", "Binomial"), each = length(x_hiper))
+)
+
+ggplot(datos_comparacion_dist, aes(x = x, y = prob, fill = distribucion)) +
+  geom_col(position = "dodge", alpha = 0.8, width = 0.7) +
+  labs(title = "Comparación: Hipergeométrica vs Binomial",
+       subtitle = paste("N =", N_grande, ", K =", K_grande, ", n =", n_comparacion, ", p =", p_binomial),
+       x = "x (número de éxitos)",
+       y = "P(X = x)",
+       fill = "Distribución") +
+  scale_fill_manual(values = c("Hipergeométrica" = "steelblue", 
+                                "Binomial" = "coral")) +
+  theme_minimal() +
+  theme(plot.title = element_text(face = "bold", hjust = 0.5),
+        plot.subtitle = element_text(hjust = 0.5),
+        legend.position = "right")
+
+```
+
+
+## Simulación de Valores y Comparación con la Teórica
+
+```{r}
+# Simulación de Valores y Comparación con la Teórica
+N <- 50    
+K <- 20    
+n <- 10    
+n_sim <- 10000
+
+simulaciones <- rhyper(n_sim, K, N-K, n)
+
+# Distribución teórica
+x_teorico <- max(0, n-(N-K)):min(n, K)
+prob_teorica <- dhyper(x_teorico, K, N-K, n)
+
+# Distribución de la simulación
+tabla_simulacion <- table(simulaciones)
+x_simulacion <- as.numeric(names(tabla_simulacion))
+prob_simulacion <- as.numeric(tabla_simulacion) / n_sim
+
+# Crear data frame para comparación
+datos_comparacion <- data.frame(
+  x = c(x_teorico, x_simulacion),
+  probabilidad = c(prob_teorica, prob_simulacion),
+  tipo = rep(c("Teórica", "Simulada"), c(length(x_teorico), length(x_simulacion)))
+)
+kable(datos_comparacion,
+      caption = "Comparación",
+      align = "cc") %>%
+  kable_styling(bootstrap_options = "striped")
+
+# Gráfico de comparación
+ggplot(datos_comparacion, aes(x = x, y = probabilidad, fill = tipo)) +
+  geom_col(position = "dodge", alpha = 0.8, width = 0.7) +
+  labs(title = "Comparación: Distribución Teórica vs Simulada",
+       subtitle = paste("N =", N, ", K =", K, ", n =", n, ", Simulaciones =", n_sim),
+       x = "x (Número de éxitos en la muestra)",
+       y = "Probabilidad",
+       fill = "Distribución") +
+  scale_fill_manual(values = c("Teórica" = "steelblue", "Simulada" = "coral")) +
+  theme_minimal() +
+  theme(plot.title = element_text(face = "bold", hjust = 0.5),
+        plot.subtitle = element_text(hjust = 0.5),
+        legend.position = "right")
+
+
+# Media
+media_teorica <- n * K / N
+media_simulada <- mean(simulaciones)
+cat("Media teórica:", round(media_teorica, 4), "\n")
+cat("Media simulada:", round(media_simulada, 4), "\n")
+cat("Diferencia:", round(abs(media_teorica - media_simulada), 4), "\n\n")
+
+# Varianza
+varianza_teorica <- n * (K/N) * ((N-K)/N) * ((N-n)/(N-1))
+varianza_simulada <- var(simulaciones)
+cat("Varianza teórica:", round(varianza_teorica, 4), "\n")
+cat("Varianza simulada:", round(varianza_simulada, 4), "\n")
+cat("Diferencia:", round(abs(varianza_teorica - varianza_simulada), 4), "\n\n")
+
+# Desviación estándar
+cat("SD teórica:", round(sqrt(varianza_teorica), 4), "\n")
+cat("SD simulada:", round(sd(simulaciones), 4), "\n\n")
+
+# Tabla de frecuencias comparada
+tabla_comparacion <- data.frame(
+  x = x_teorico,
+  Prob_Teorica = round(prob_teorica, 4),
+  Frec_Simulada = sapply(x_teorico, function(val) sum(simulaciones == val)),
+  Prob_Simulada = round(sapply(x_teorico, function(val) sum(simulaciones == val) / n_sim), 4)
+)
+
+kable(tabla_comparacion,
+      caption = "Tabla de comparación de frecuencias Simulada vs Teórica",
+      align = "cc") %>%
+  kable_styling(bootstrap_options = "striped")
+
+```
+
+
+
+## Ejercicios propuestos
+::: {#exr-defectuosos}
+Se pone a la venta un lote de 100 artículos de los cuales 10 son defectuosos. Un comprador extrae una muestra al azar de 5 artículos y decide que si encuentra 2 o más defectuosos, entonces no compra el lote. Calcule la probabilidad de que la compra se efectúe.
+-   $N = 100$ 
+-   $K = 10$
+-   $n = 5$
+
+```{r}
+# Ejercicio 344
+
+# Parámetros del problema
+N <- 100   
+K <- 10    
+n <- 5    
+
+
+# La compra se efectúa si encuentra 0 o 1 defectuosos
+# Es decir: P(X ≤ 1) donde X = número de defectuosos en la muestra
+
+# Resolución
+prob_compra_1 <- phyper(1, K, N-K, n)
+
+cat("La compra se efectúa si X ≤ 1 (si encuentra 0 o 1 defectuosos en la muestra)\n\n")
+cat("P(X ≤ 1) = P(compra) =", round(prob_compra_1, 6), "\n")
+cat("                      =", round(prob_compra_1 * 100, 2), "%\n\n")
+
+
+# Tabla completa de probabilidades
+cat("\nTabla de probabilidades completa:\n")
+x <- 0:min(n, K)
+probabilidades <- dhyper(x, K, N-K, n)
+prob_acumulada <- phyper(x, K, N-K, n)
+
+tabla <- data.frame(
+  "Defectuosos (x)" = x,
+  "P(X = x)" = round(probabilidades, 6),
+  "P(X ≤ x)" = round(prob_acumulada, 6),
+  "Decisión" = ifelse(x <= 1, "Si compra", "No compra"),
+  check.names = FALSE
+)
+kable(tabla,
+      caption = "Tabla de Probabilidades",
+      align = "cc") %>%
+  kable_styling(bootstrap_options = "striped")
+
+# Probabilidad de NO comprar (complemento)
+prob_no_compra <- 1 - prob_compra_1
+cat("\n\nProbabilidades de decisión:\n")
+cat("P(Si compra) = P(X ≤ 1) =", round(prob_compra_1, 6), 
+    "(", round(prob_compra_1 * 100, 2), "%)\n")
+cat("P(No compra) = P(X ≥ 2) =", round(prob_no_compra, 6), 
+    "(", round(prob_no_compra * 100, 2), "%)\n")
+
+# Visualización
+
+datos_grafico <- data.frame(
+  x = x,
+  probabilidad = probabilidades,
+  decision = ifelse(x <= 1, "Si compra", "No compra")
+)
+kable(datos_grafico,
+      caption = "Tabla de comparación de frecuencias Simulada vs Teórica",
+      align = "cc") %>%
+  kable_styling(bootstrap_options = "striped")
+
+ggplot(datos_grafico, aes(x = factor(x), y = probabilidad, fill = decision)) +
+  geom_col(alpha = 0.8, width = 0.7) +
+  geom_text(aes(label = paste0(round(probabilidad * 100, 2), "%")), 
+            vjust = -0.5, size = 4) +
+  scale_fill_manual(values = c("Si compra" = "forestgreen", 
+                                "No compra" = "firebrick")) +
+  labs(title = "Distribución de Probabilidad - Decisión de Compra",
+       subtitle = paste("N =", N, "artículos, K =", K, "defectuosos, n =", n, "en muestra"),
+       x = "Número de artículos defectuosos en la muestra",
+       y = "Probabilidad",
+       fill = "Decisión") +
+  theme_minimal() +
+  theme(plot.title = element_text(face = "bold", hjust = 0.5, size = 14),
+        plot.subtitle = element_text(hjust = 0.5),
+        legend.position = "bottom",
+        legend.title = element_text(face = "bold"))
+
+```
+
+
+:::
+
+
