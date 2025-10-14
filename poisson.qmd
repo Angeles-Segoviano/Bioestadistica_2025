@@ -1020,33 +1020,29 @@ for (n in tamaños) {
   hist(z, breaks = 30, freq = FALSE, 
        main = paste("n =", n),
        xlab = "Z estandarizado",
+       ylab = "Densidad",
        col = "lightblue",
        ylim = c(0, 0.5))
   
   curve(dnorm(x), add = TRUE, col = "red", lwd = 2)
   
   #Estadísticas
-  cat("\n n =", n, "\n'")
-  cat("Media de Z:", mean(z), "(teórico: 0)\n")
-  cat("Varianza de Z:", var(z), "(teórico: 1)\n")
+  cat("\n n =", n)
+  cat("\nMedia de Z:", mean(z), "(teórico -> 0)\n")
+  cat("\nVarianza de Z:", var(z), "(teórico -> 1)\n")
 }
 
 par(mfrow = c(1, 1))
 
-cat("\nn = 30\n")
 medias_30 <- replicate(n_sim, mean(rpois(30, lambda)))
 z_30 <- (medias_30 - lambda) / sqrt(lambda / 30)
 
-qqnorm(z_30, main = "Q-Q Plot para n = 30")
-qqline(z_30, col = "red", lwd = 2)
-
-
-par(mfrow = c(1, 2))
 
 x_pois <- 0:20
-plot(x_pois, dpois(x_pois, lambda), type = "h", lwd = 3,
-     main = "Distribución Original\nPoisson(7)",
-     xlab = "x", ylab = "P(X = x)",
+plot(x_pois, dpois(x_pois, lambda), type = "h", lwd = 5,
+     main = "Distribución Original\nPoisson",
+     xlab = "x", 
+     ylab = "P(X = x)",
      col = "blue")
 
 hist(z_30, breaks = 30, freq = FALSE,
@@ -1130,12 +1126,55 @@ Un sitio web recibe en promedio 15 visitantes por minuto durante las horas pico.
 **Análisis requerido:**
 
 a)  ¿Cuál es la probabilidad de que en un minuto el servidor experimente degradación?
+```{r}
+lambda <- 15
+manejar <- 25
+
+Prob_degradacion <- 1 - ppois(manejar, lambda)
+cat("La probabilidad de que en un minuto el sistema experimente degradación P(X>25)es de:", Prob_degradacion)
+
+```
+
 
 b)  Si se duplica la capacidad del servidor (50 solicitudes), ¿cómo cambia la probabilidad de degradación?
+```{r}
+lambda <- 15
+manejar <- 50
+
+Prob_degradacion <- 1 - ppois(manejar, lambda)
+
+cat("La probabilidad de que en un minuto el sistema experimente degradación P(X>50)es de:", Prob_degradacion)
+```
+
 
 c)  ¿Cuál sería la capacidad óptima del servidor para que la probabilidad de degradación sea menor al 1%?
+```{r}
+lambda <- 15
+prob_deseada <- 0.001
+
+capacidad_optima <- qpois(1 - prob_deseada, lambda)
+
+cat("La capacidad óptima sería:", capacidad_optima)
+```
+
 
 d)  Simule el comportamiento del servidor durante una hora (60 minutos) y calcule el porcentaje de tiempo con degradación.
+```{r}
+set.seed(123)
+
+lambda <- 15
+manejar <- 25
+tiempo <- 60
+
+visitantes <- rpois(tiempo, lambda)
+degradacion <- visitantes > manejar
+
+minutos_deg <- sum(degradacion)
+porcentaje_deg <- (minutos_deg / tiempo) * 100
+
+cat("El porcentaje de tiempo con degradación es:", porcentaje_deg)
+
+```
 :::
 
 ::: {#exr-inventarios}
@@ -1144,14 +1183,88 @@ Una tienda registra que el número de cierto producto vendido por día sigue una
 **Problemas de optimización:**
 
 a)  Si la tienda mantiene un inventario de 12 unidades al inicio del día, ¿cuál es la probabilidad de quedarse sin existencias?
+```{r}
+lambda <- 8
+inventario <- 12
+
+Prob_sin_e <- 1 - ppois(inventario, lambda)
+
+cat("Probabilidad de quedarse sin existencias (P(X>12)):", Prob_sin_e)
+```
+
 
 b)  ¿Cuántas unidades debe tener para que la probabilidad de agotarse sea menor al 5%?
+```{r}
+lambda <- 8
+P_deseada <- 0.05
+
+inventario_optimo <- qpois(1 - P_deseada, lambda)
+
+cat("Debería de tener:", inventario_optimo, "unidades, para tener una probabilidad menor al 5% de que se agoten")
+```
+
 
 c)  Calcule el costo esperado diario si:
 
     -   Cada unidad no vendida cuesta \$2 mantenerla en inventario
     -   Cada venta perdida por falta de stock cuesta \$15
     -   El costo de adquisición es \$10 por unidad
+```{r}
+lambda <- 8 
+inventario <- 12  
+costo_adquisicion <- 10  
+costo_mantenimiento <- 2  
+costo_faltante <- 15  
+
+demandas <- 0:50
+probs <- dpois(demandas, lambda)
+
+costo_adq <- inventario * costo_adquisicion
+
+
+inventario_sobrante <- pmax(0, inventario - demandas)
+costo_mant_esperado <- sum(inventario_sobrante * costo_mantenimiento * probs)
+
+
+ventas_perdidas <- pmax(0, demandas - inventario)
+esperanza_ventas_perdidas <- sum(ventas_perdidas * probs)
+costo_falt_esperado <- esperanza_ventas_perdidas * costo_faltante
+
+
+costo_total <- costo_adq + costo_mant_esperado + costo_falt_esperado
+
+cat("Costo total esperado: $", round(costo_total, 2), "/día\n\n")
+
+cat("Unidades sobrantes esperadas:", round(sum(inventario_sobrante * probs), 4), "unidades/día\n")
+cat("Ventas perdidas esperadas:   ", round(esperanza_ventas_perdidas, 4), "ventas/día\n\n")
+
+```
+
 
 d)  Determine el nivel óptimo de inventario que minimiza el costo total esperado.
+```{r}
+lambda <- 8 
+costo_adquisicion <- 10  
+costo_mantenimiento <- 2  
+costo_faltante <- 15 
+
+niveles_inventario <- 0:30
+costos_totales <- numeric(length(niveles_inventario))
+
+for (i in 1:length(niveles_inventario)) {
+  Q <- niveles_inventario[i]
+  c_adq <- Q * costo_adquisicion
+  c_mant <- sum(pmax(0, Q - demandas) * costo_mantenimiento * probs)
+  c_falt <- sum(pmax(0, demandas - Q) * costo_faltante * probs)
+  costos_totales[i] <- c_adq + c_mant + c_falt
+}
+
+inventario_optimo_costo <- niveles_inventario[which.min(costos_totales)]
+costo_minimo <- min(costos_totales)
+
+cat("Inventario óptimo:", inventario_optimo_costo, "unidades\n")
+cat("Costo mínimo esperado: $", round(costo_minimo, 2), "/día\n\n")
+```
+
+
 :::
