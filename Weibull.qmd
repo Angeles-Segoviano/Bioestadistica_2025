@@ -1,0 +1,369 @@
+---
+title: "Distribución Weibull"
+format: html
+editor: visual
+---
+```{=html}
+<style>
+main.content {
+text-align: justify}
+</style>
+```
+
+```{r}
+#| include: false
+#| label: setup
+
+library(ggplot2)
+library(dplyr)
+library(gridExtra)
+library(knitr)
+library(kableExtra)
+library(plotly)
+```
+
+
+Especialmente utilizada en análisis de confiabilidad y estudios de supervivencia.
+El valor de una variable aleatoria con esta distribución se puede interpretar como el tiempo de vida útil.
+
+**Análisis de confiabilidad**
+Modelar el tiempo hasta el fallo de componentes mecánicos o electrónicos.
+
+**Análisis de supervivencia**
+Estudiar tiempos de vida en medicina y biología.
+
+**Metereología**
+Modelar distribuciones de velocidad del viento.
+
+**Ingeniería**
+Análisis de fatiga de materiales.
+
+**Control de calidad**
+Modelar tiempos entre fallas.
+
+
+
+::: {#def-dist_weibull}
+
+La variable aleatoria continua $X$ tiene una distribución Weibull con paárametros $a>0$ y $\lambda >0$ si su función de densidad está dada por:
+
+\begin{equation}
+f(x) = \begin{cases} 
+\lambda \alpha ( \lambda x)^{\alpha - 1} e^{(\lambda x)^{\alpha}} & \text{si } x > 0 \\
+0 & \text{ en otro caso}
+\end{cases}
+\end{equation}
+
+Donde:
+
+- \alpha es el **parámetro de forma**
+- \lambda es el **parámetro de escala**
+
+Y se denota como $X \sim Weibull(\alpha, \lambda)$
+
+:::
+
+## Casos Especiales:
+
+- **Distribución exponencial:** Cuando el parámetro $\alpha$ = 1. (Con páramtero $\lambda$)
+
+- **Distribución Rayleigh ($\sigma$):** Cuando $\alpha$ = 2 y $\lambda$ = $\frac{1}{\sqrt{2\pi\sigma^2}}$
+
+## Relación con distribución Uniforme
+
+Sea $U$ una varibale aleatoria con distribución $unif(0,1)$ y sean $\alpha>0$ y $\lambda>0$ dos constantes; podemos obtener valores al azar de la distribución Weibull a partir de valores al azar de la distribución Uniforme:
+
+\begin{equation}
+\frac{1}{\lambda} (-ln(1-U))^{1/\alpha} \sim Weibull(\alpha , \lambda).\\
+\end{equation}
+
+## Comportamiento de la Distribución de Weibull según parámetros
+
+```{r}
+lambda <- 1
+k_valores <- c(0.5, 1, 1.5, 2, 3)
+x_vals <- seq(0, 3, length.out = 500)
+
+
+colores <- c("red", "blue", "green", "purple", "orange")
+
+
+plot(NULL, 
+     xlim = c(0, 3), 
+     ylim = c(0, 2.5),
+     xlab = "x", 
+     ylab = "Densidad",
+     main = paste("Distribución Weibull: variando alpha (lambda =", lambda, ")"))
+
+for (i in seq_along(k_valores)) {
+  k <- k_valores[i]
+  y_vals <- dweibull(x_vals, shape = k, scale = lambda)
+  lines(x_vals, y_vals, col = colores[i], lwd = 2)
+}
+
+legend("topright", 
+       legend = paste("alpha =", k_valores), 
+       col = colores, 
+       lwd = 2)
+
+
+k_fijo <- 2
+
+lambda_valores <- c(0.5, 1, 1.5, 2, 2.5)
+
+plot(NULL, 
+     xlim = c(0, 5), 
+     ylim = c(0, 1.2),
+     xlab = "x", 
+     ylab = "Densidad",
+     main = paste("Distribución Weibull: variando lambda (alpha =", k_fijo, ")"))
+
+x_vals2 <- seq(0, 5, length.out = 500)
+
+for (i in seq_along(lambda_valores)) {
+  lambda_i <- lambda_valores[i]
+  y_vals <- dweibull(x_vals2, shape = k_fijo, scale = lambda_i)
+  lines(x_vals2, y_vals, col = colores[i], lwd = 2)
+}
+
+```
+
+**Interpretación**
+
+  - $\alpha$< 1 : tasa de fallo decreciente.
+  - $\alpha$= 1 : tasa de fallo constante (equivale a distribución exponencial).
+  - $alpha$> 1 : tasa de fallo creciente.
+
+## Función de la Distribución (CDF)
+
+Llevando a cabo el cambio de varibale $\lambda u = (\lambda y)^{\alpha}$, suponiendo que $y$ es la variable de integración, se obtiene:
+
+\begin{equation}
+F(x) = \begin{cases} 
+1 - e^{-(\lambda x)^{\alpha}}  & \text{si } x > 0, \\
+0 & \text{ en otro caso}
+\end{cases}
+\end{equation}
+
+
+## Medidas descriptivas
+
+### Media 
+
+$$E(X) = \frac{1}{\lambda} \Gamma(1+ 1/\alpha)$$
+
+### Varianza
+
+$$Var(X) = \frac{1}{\lambda^2} [\Gamma(1 + 2/\alpha) - \Gamma^2 (1 + 1/\alpha)]$$
+
+### Coeficiente de Variación
+
+$$CV = \sqrt{\frac{\Gamma\left(1 + \frac{2}{k}\right)}{\Gamma^2\left(1 + \frac{1}{k}\right)} - 1}$$
+
+
+### Moda
+
+Si a>1 entonces $X$ tiene una única moda dada por:
+
+$$x^* = \frac{1}{\lambda} \left(\frac{\alpha - 1}{\alpha}\right)^{1/\alpha}$$
+
+## Momentos y f.g.m.
+
+Sea $X$ una variable aleatoria con distribución Weibull($\alpha$,$\lambda$). El n-ésimo momento de $X$ es:
+ 
+\begin{equation}
+E(X^n) = \frac{1}{\lambda^n} \Gamma(1 + \frac{n}{\alpha})
+\end{equation}
+ 
+Y como consecuencia:
+
+\begin{equation}
+M(t) = \sum_{n=0}^{\infty} \frac{t^n}{n!} \frac{1}{\lambda^n} \Gamma(1 + \frac{n}{\alpha})
+\end{equation}
+
+## Cuantiles
+
+Inveritendo la función de distribución, se encuentra el cuantil al 100p%.
+
+$$F(x_p) = p:$$
+\begin{eqnarray}
+p & = & 1 - e^{-(x_p/\lambda)^k} \\
+1 - p & = & e^{-(x_p/\lambda)^k} \\
+ln(1 - p) & = & -(x_p/\lambda)^k \\
+-ln(1 - p) & = & (x_p/\lambda)^k \\
+[-ln(1 - p)]^{1/k} & = & x_p /\lambda
+\end{eqnarray}
+
+Para finalmente obtener:
+ $$x_p = \lambda[-ln(1-p)]^{1/k}$$
+Donde:
+
+ - $x_p$ es el cuantil al 100p%.
+ - $p$ es la probabilidad acumulada (0<p<1).
+ - $k$ es el parámetro de forma.
+ - $\lambda$ es el parámetro de escala.
+ 
+ 
+### Casos Especiales
+
+  - **Mediana** (p=0.5): $x_{0.5}$ = $\lambda(ln2)^{1/k}$.
+  - **Primer cuartil** (p=0.25): $x_{0.25 = \lambda[-ln(0.75)]^{1/k}}$
+  - **Tercer cuartil** (p=0.75): $x_{0.75 = \lambda[-ln(0.25)]^{1/k}}$
+
+## Ejercicios propuestos
+
+::: {#exr-1Weibull}
+
+**Análisis de tiempo de vida de componentes electrónicos**
+
+Una empresa fabrica componnetes electrónicos cuyo tiempo de vida (en horas) sigue una distribución Weibull con $\alpha = 2.5$ y $\lambda = 1000$.
+a) Calcula la media y la desviación estándar del tiempo de vida.
+b) ¿Cuál es la probabilidad de que un componente dure más de 1200 horas?
+c) Calcula el cuantil 10%.
+d) Realiza la gráfica.
+e) Realiza la simulación con 1000 componentes.
+
+```{r}
+k1 <- 2.5
+lambda1 <- 1000
+
+media1 <- lambda1 * gamma(1 + 1/k1)
+varianza1 <- lambda1^2 * (gamma(1 + 2/k1) - gamma(1 + 1/k1)^2)
+sd1 <- sqrt(varianza1)
+
+cat("a) Media y desviación estándar:\n")
+cat("   Media:", round(media1, 2), "horas\n")
+cat("   Desviación estándar:", round(sd1, 2), "horas\n\n")
+
+prob_mas_1200 <- 1 - pweibull(1200, shape = k1, scale = lambda1)
+cat("b) P(X > 1200) =", round(prob_mas_1200, 4), "\n")
+cat("   Es decir,", round(prob_mas_1200 * 100, 2), "% de los componentes duran más de 1200 horas\n\n")
+
+
+tiempo_garantia <- qweibull(0.10, shape = k1, scale = lambda1)
+cat("c) Tiempo de garantía (10% de fallas):", round(tiempo_garantia, 2), "horas\n")
+cat("   La empresa puede garantizar que el 90% durará más de", round(tiempo_garantia, 2), "horas\n\n")
+
+
+x_vals1 <- seq(0, 2000, length.out = 500)
+y_vals1 <- dweibull(x_vals1, shape = k1, scale = lambda1)
+
+plot(x_vals1, y_vals1, 
+     type = "l", 
+     lwd = 2, 
+     col = "blue",
+     xlab = "Tiempo (horas)", 
+     ylab = "Densidad",
+     main = "Distribución del tiempo de vida de componentes")
+
+abline(v = media1, col = "red", lwd = 2, lty = 2)
+abline(v = tiempo_garantia, col = "green", lwd = 2, lty = 2)
+abline(v = 1200, col = "purple", lwd = 2, lty = 2)
+
+legend("topright", 
+       legend = c("Densidad", 
+                  paste("Media =", round(media1, 0)), 
+                  paste("Garantía 90% =", round(tiempo_garantia, 0)),
+                  "1200 horas"), 
+       col = c("blue", "red", "green", "purple"), 
+       lwd = 2, 
+       lty = c(1, 2, 2, 2))
+
+
+set.seed(123)
+muestra1 <- rweibull(1000, shape = k1, scale = lambda1)
+
+cat("\ne) Simulación de 1000 componentes:\n")
+cat("   Media muestral:", round(mean(muestra1), 2), "horas\n")
+cat("   SD muestral:", round(sd(muestra1), 2), "horas\n")
+cat("   Componentes que duraron más de 1200 horas:", 
+    sum(muestra1 > 1200), "de 1000\n\n")
+```
+
+:::
+
+::: {#exr-2Weibull}
+
+**Comparación de dos tipos de lámparas**
+
+Una tienda vende dos tipos de lámparas:
+
+  -Tipo A: $\sim Weibull (\alpha=3, \lambda = 50000h)$
+  -Tipo B: $\sim Weibull (\alpha = 2, \lambda = 55000h)$
+
+a) Calcular la media y el Coeficiente de Variación para ambos tipos.
+b) Calcular cuál es la probabilidad de durar más de 40000 horas.
+c) Calcular la mediana para ambos tipos.
+d) Realizar una simulación de 500 lámparas para cada tipo.
+
+```{r}
+k_A <- 3.0
+lambda_A <- 50000
+k_B <- 2.0
+lambda_B <- 55000
+
+media_A <- lambda_A * gamma(1 + 1/k_A)
+sd_A <- sqrt(lambda_A^2 * (gamma(1 + 2/k_A) - gamma(1 + 1/k_A)^2))
+cv_A <- (sd_A / media_A) * 100
+
+media_B <- lambda_B * gamma(1 + 1/k_B)
+sd_B <- sqrt(lambda_B^2 * (gamma(1 + 2/k_B) - gamma(1 + 1/k_B)^2))
+cv_B <- (sd_B / media_B) * 100
+
+cat("   Tipo A - Media:", round(media_A, 0), "horas, CV:", round(cv_A, 2), "%\n")
+cat("   Tipo B - Media:", round(media_B, 0), "horas, CV:", round(cv_B, 2), "%\n\n")
+
+prob_A_40k <- 1 - pweibull(40000, shape = k_A, scale = lambda_A)
+prob_B_40k <- 1 - pweibull(40000, shape = k_B, scale = lambda_B)
+
+cat("b) P(X > 40000 horas):\n")
+cat("   Tipo A:", round(prob_A_40k, 4), "(", round(prob_A_40k * 100, 2), "%)\n")
+cat("   Tipo B:", round(prob_B_40k, 4), "(", round(prob_B_40k * 100, 2), "%)\n\n")
+
+
+mediana_A <- qweibull(0.5, shape = k_A, scale = lambda_A)
+mediana_B <- qweibull(0.5, shape = k_B, scale = lambda_B)
+
+cat("c) Mediana (50% de vida esperada):\n")
+cat("   Tipo A:", round(mediana_A, 0), "horas\n")
+cat("   Tipo B:", round(mediana_B, 0), "horas\n\n")
+
+x_vals2 <- seq(0, 80000, length.out = 500)
+y_A <- dweibull(x_vals2, shape = k_A, scale = lambda_A)
+y_B <- dweibull(x_vals2, shape = k_B, scale = lambda_B)
+
+plot(x_vals2, y_A, 
+     type = "l", 
+     lwd = 2, 
+     col = "red",
+     xlab = "Tiempo (horas)", 
+     ylab = "Densidad",
+     main = "Comparación de distribuciones de vida útil")
+lines(x_vals2, y_B, lwd = 2, col = "blue")
+
+abline(v = media_A, col = "red", lwd = 1, lty = 2)
+abline(v = media_B, col = "blue", lwd = 1, lty = 2)
+
+legend("topright", 
+       legend = c("Tipo A (k=3.0)", "Tipo B (k=2.0)", 
+                  paste("Media A =", round(media_A, 0)),
+                  paste("Media B =", round(media_B, 0))), 
+       col = c("red", "blue", "red", "blue"), 
+       lwd = c(2, 2, 1, 1), 
+       lty = c(1, 1, 2, 2))
+
+set.seed(456)
+muestra_A <- rweibull(500, shape = k_A, scale = lambda_A)
+muestra_B <- rweibull(500, shape = k_B, scale = lambda_B)
+
+cat("\nSimulación de 500 lámparas de cada tipo:\n")
+cat("   Tipo A - Vida promedio:", round(mean(muestra_A), 0), "horas\n")
+cat("   Tipo B - Vida promedio:", round(mean(muestra_B), 0), "horas\n")
+cat("   Tipo A - Duran más de 40000 horas:", sum(muestra_A > 40000), "de 500\n")
+cat("   Tipo B - Duran más de 40000 horas:", sum(muestra_B > 40000), "de 500\n\n")
+
+```
+
+
+:::
+ 
